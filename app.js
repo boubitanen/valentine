@@ -158,42 +158,42 @@ const COUPONS = [
 
 const MEMORIES = [
   {
-    src: "images/1.jpeg",
+    src: "1.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/2.jpeg",
+    src: "2.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/3.jpeg",
+    src: "3.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/4.jpeg",
+    src: "4.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/5.jpeg",
+    src: "5.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/6.jpeg",
+    src: "6.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/7.jpeg",
+    src: "7.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
   {
-    src: "images/8.jpeg",
+    src: "8.jpeg",
     caption: "XXX",
     meta: "XXX",
   },
