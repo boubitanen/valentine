@@ -14,6 +14,8 @@
 
   --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
+
+  --tabbar-h: 76px;
 }
 
 * { box-sizing: border-box; }
@@ -29,6 +31,7 @@ body {
     radial-gradient(900px 700px at 50% 100%, rgba(52, 199, 89, 0.12), transparent 55%),
     linear-gradient(180deg, var(--bg0), var(--bg1));
   overflow-x: hidden;
+  min-height: 100svh;
 }
 
 body::before{
@@ -72,7 +75,12 @@ body::before{
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding-top: calc(22px + env(safe-area-inset-top))
+  padding-top: calc(22px + env(safe-area-inset-top));
+  padding-bottom: 24px; /* space for tabbar */
+}
+
+body.has-tabbar .shell {
+  padding-bottom: calc(24px + var(--tabbar-h) + env(safe-area-inset-bottom));
 }
 
 .topbar {
@@ -277,7 +285,7 @@ body::before{
 }
 
 .footer {
-  margin-top: auto;
+  margin-top: 18px;
   text-align: center;
   color: rgba(255,255,255,0.55);
   font-size: 12.5px;

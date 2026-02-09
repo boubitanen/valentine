@@ -135,6 +135,7 @@ function isAccepted() {
   }
 }
 
+
 /* -----------------------------
    Coupons logic 
 ------------------------------ */
@@ -159,43 +160,43 @@ const COUPONS = [
 const MEMORIES = [
   {
     src: "1.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Côté Sushi 🍣",
+    meta: "5 Février 2026",
   },
   {
     src: "2.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Côté Sushi 🍣",
+    meta: "30 Janvier 2026",
   },
   {
     src: "3.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Tigermilk 🐯🥛",
+    meta: "13 Décembre 2025",
   },
   {
     src: "4.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Memphis Burger 🍔",
+    meta: "24 Janvier 2026",
   },
   {
     src: "5.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Le Tigre 🐯",
+    meta: "29 Décembre 2025",
   },
   {
     src: "6.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Chez Boubi 🏠",
+    meta: "31 Octobre 2025",
   },
   {
     src: "7.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Marché de Noël 🎄",
+    meta: "19 Décembre 2025",
   },
   {
     src: "8.jpeg",
-    caption: "XXX",
-    meta: "XXX",
+    caption: "Sushi Shop 🍣",
+    meta: "29 Novembre 2025",
   },
 ];
 
