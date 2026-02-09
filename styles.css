@@ -20,6 +20,7 @@
 html, body { height: 100%; }
 body {
   margin: 0;
+  padding-top: env(safe-area-inset-top);
   font-family: var(--font-sans);
   color: var(--text);
   background:
@@ -471,7 +472,7 @@ body::before{
 
 .memory-img{
   width: 100%;
-  height: 190px;
+  height: auto;
   object-fit: cover;
   display: block;
 }

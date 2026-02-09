@@ -148,6 +148,7 @@ const COUPONS = [
   { id: "bite", emoji: "😼", title: "Bon pour un croquage", desc: "Boubi te croque tout cru." },
   { id: "massage", emoji: "💆‍♀️", title: "Bon pour un massage", desc: "Massage relaxant fait maison par Boubi." },
   { id: "date", emoji: "🍓", title: "Bon pour un date", desc: "Nos dates sont toujours les meilleurs!" },
+  { id: "sleepover", emoji: "💤", title: "Bon pour un sleepover", desc: "Un sleepover à la maison avec Boubi!" },
 ];
 
 /* -----------------------------
@@ -157,14 +158,44 @@ const COUPONS = [
 
 const MEMORIES = [
   {
-    src: "./images/memory-1.jpg",
-    caption: "Notre date 🍓",
-    meta: "Paris • 2025",
+    src: "images/1.jpeg",
+    caption: "XXX",
+    meta: "XXX",
   },
   {
-    src: "./images/memory-2.jpg",
-    caption: "Un moment trop cute 🥺",
-    meta: "2025",
+    src: "images/2.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/3.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/4.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/5.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/6.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/7.jpeg",
+    caption: "XXX",
+    meta: "XXX",
+  },
+  {
+    src: "images/8.jpeg",
+    caption: "XXX",
+    meta: "XXX",
   },
 ];
 
