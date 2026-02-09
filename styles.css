@@ -17,7 +17,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { height: 100%; background: var(--bg0); }
 body {
   margin: 0;
   padding-top: env(safe-area-inset-top);
@@ -72,6 +72,7 @@ body::before{
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding-top: calc(22px + env(safe-area-inset-top))
 }
 
 .topbar {
