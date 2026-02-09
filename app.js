@@ -205,7 +205,12 @@ function renderMemories() {
 
   memoriesGridEl.innerHTML = "";
 
+  // Load likes from storage
+  const likes = loadLikes();
+
   MEMORIES.forEach((m) => {
+    const id = m.src || JSON.stringify(m);
+
     const card = document.createElement("div");
     card.className = "memory-card";
 
@@ -213,6 +218,11 @@ function renderMemories() {
     img.className = "memory-img";
     img.src = m.src;
     img.alt = m.caption || "Memory";
+
+    // Heart overlay for double-click animation
+    const overlay = document.createElement("div");
+    overlay.className = "memory-heart-overlay";
+    overlay.innerHTML = "💖";
 
     const body = document.createElement("div");
     body.className = "memory-body";
@@ -225,14 +235,81 @@ function renderMemories() {
     meta.className = "memory-meta";
     meta.textContent = m.meta || "";
 
+    // Like button (heart-only, placed over the card bottom-right)
+    const likeBtn = document.createElement("button");
+    likeBtn.className = "memory-like";
+    likeBtn.type = "button";
+    likeBtn.setAttribute("aria-label", "J'aime");
+    likeBtn.setAttribute("aria-pressed", likes[id] ? "true" : "false");
+    likeBtn.textContent = likes[id] ? "💖" : "🤍";
+    if (likes[id]) likeBtn.classList.add("is-liked");
+
+    likeBtn.addEventListener("click", () => {
+      const newVal = !Boolean(loadLikes()[id]);
+      setLiked(id, newVal);
+      // update UI immediately
+      likeBtn.textContent = newVal ? "💖" : "🤍";
+      likeBtn.classList.toggle("is-liked", newVal);
+      likeBtn.setAttribute("aria-pressed", newVal ? "true" : "false");
+    });
+
     body.appendChild(cap);
     body.appendChild(meta);
+    // append like button to the card so it's positioned bottom-right
+    card.appendChild(likeBtn);
 
     card.appendChild(img);
+    card.appendChild(overlay);
     card.appendChild(body);
+
+    // Pointer-based double-tap detection (works on mobile and desktop)
+    img._lastTap = 0;
+    img.addEventListener("pointerup", (ev) => {
+      const now = Date.now();
+      const DT = 300; // ms threshold for double-tap
+      if (now - (img._lastTap || 0) <= DT) {
+        // double-tap detected
+        const currentlyLiked = Boolean(loadLikes()[id]);
+        if (!currentlyLiked) {
+          setLiked(id, true);
+          likeBtn.textContent = "💖";
+          likeBtn.classList.add("is-liked");
+          likeBtn.setAttribute("aria-pressed", "true");
+        }
+
+        // animate overlay
+        overlay.classList.add("is-visible");
+        window.setTimeout(() => overlay.classList.remove("is-visible"), 520);
+        img._lastTap = 0;
+      } else {
+        img._lastTap = now;
+      }
+    });
 
     memoriesGridEl.appendChild(card);
   });
+}
+
+/* Likes storage helpers */
+const LIKES_KEY = "valentine_likes_v1";
+function loadLikes() {
+  try {
+    const raw = localStorage.getItem(LIKES_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") return parsed;
+    return {};
+  } catch {
+    return {};
+  }
+}
+function saveLikes(obj) {
+  try { localStorage.setItem(LIKES_KEY, JSON.stringify(obj)); } catch {}
+}
+function setLiked(id, v) {
+  const s = loadLikes();
+  if (v) s[id] = true; else delete s[id];
+  saveLikes(s);
 }
 
 
@@ -393,6 +470,7 @@ gateForm.addEventListener("submit", (e) => {
 yesBtn.addEventListener("click", () => {
   setAccepted(true);
   if (tabbar) tabbar.hidden = false;
+  document.body.classList.add("has-tabbar");
   showScreen("woohoo");
   setActiveTab("woohoo");
 });
@@ -437,8 +515,15 @@ resetBtn.addEventListener("click", () => {
   // Reset coupons state (NEW)
   try { localStorage.removeItem(COUPON_KEY); } catch {}
 
+  // Reset likes on memories
+  try { localStorage.removeItem(LIKES_KEY); } catch {}
+
+  // If the memories screen is visible, re-render to clear UI
+  try { renderMemories(); } catch {}
+
   // Hide tabbar again (NEW)
   if (tabbar) tabbar.hidden = true;
+  document.body.classList.remove("has-tabbar");
   setActiveTab("woohoo");
   showScreen("gate");
 });
@@ -451,6 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isAccepted()) {
       // She already said YES before: show nav + go to coupons
       if (tabbar) tabbar.hidden = false;
+      document.body.classList.add("has-tabbar");
       showScreen("woohoo");
       setActiveTab("woohoo");
     } else {

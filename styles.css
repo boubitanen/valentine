@@ -19,32 +19,42 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; background: var(--bg0); }
+/* Put the decorative gradient on the root so it stays fixed during scroll
+   and won't be accidentally covered by the body background. Use a stable
+   `100vh` for body min-height to avoid mobile svh shifts. */
+html {
+  height: 100%;
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(255, 45, 85, 0.22), transparent 55%),
+    radial-gradient(900px 500px at 80% 0%, rgba(255, 94, 161, 0.18), transparent 60%),
+    radial-gradient(900px 700px at 50% 100%, rgba(52, 199, 89, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 body {
+  height: 100%;
   margin: 0;
   padding-top: 0;
   font-family: var(--font-sans);
   color: var(--text);
-  background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(255, 45, 85, 0.22), transparent 55%),
-    radial-gradient(900px 500px at 80% 0%, rgba(255, 94, 161, 0.18), transparent 60%),
-    radial-gradient(900px 700px at 50% 100%, rgba(52, 199, 89, 0.12), transparent 55%),
-    linear-gradient(180deg, var(--bg0), var(--bg1));
   overflow-x: hidden;
-  min-height: 100svh;
+  min-height: 100vh;
+  background: transparent; /* allow root gradient to show through */
 }
 
-body::before{
-  content:"";
+.bg-gradient{
+  /* Keep the element available in the DOM for accessibility, but hide its
+     own background to avoid doubling the root background and potential
+     stacking issues. The main gradient is applied to `html`. */
   position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
-  background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(255, 45, 85, 0.22), transparent 55%),
-    radial-gradient(900px 500px at 80% 0%, rgba(255, 94, 161, 0.18), transparent 60%),
-    radial-gradient(900px 700px at 50% 100%, rgba(52, 199, 89, 0.12), transparent 55%),
-    linear-gradient(180deg, var(--bg0), var(--bg1));
+  background: transparent;
+  transform: translate3d(0,0,0); /* keep compositing optimization */
 }
 
 .bg-hearts {
@@ -60,11 +70,19 @@ body::before{
     radial-gradient(circle at 60% 15%, rgba(255, 45, 85, 0.18) 0 2px, transparent 3px);
   background-size: 280px 280px;
   filter: blur(0.2px);
+  background-position: 0 0, 80px 140px, 160px 60px, 40px 200px;
   animation: floaty 14s ease-in-out infinite;
+  background-repeat: repeat;
+  transform: translateZ(0);
+  will-change: background-position;
 }
 @keyframes floaty {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-14px); }
+  0%, 100% {
+    background-position: 0 0, 80px 140px, 160px 60px, 40px 200px;
+  }
+  50% {
+    background-position: 0 -40px, 80px 100px, 160px 20px, 40px 160px;
+  }
 }
 
 .shell {
@@ -76,7 +94,6 @@ body::before{
   flex-direction: column;
   gap: 14px;
   padding-top: calc(22px + env(safe-area-inset-top));
-  padding-bottom: 24px; /* space for tabbar */
 }
 
 body.has-tabbar .shell {
@@ -421,7 +438,7 @@ body.has-tabbar .shell {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0; /* center emoji without label spacing */
   cursor: pointer;
 }
 
@@ -438,6 +455,7 @@ body.has-tabbar .shell {
 .tabbar__label{
   font-size: 13px;
   letter-spacing: 0.2px;
+  display: none; /* hide labels so emoji centers in button */
 }
 
 /* Coupon used state (NEW) */
@@ -477,6 +495,7 @@ body.has-tabbar .shell {
   background: rgba(0,0,0,0.18);
   border-radius: 16px;
   overflow: hidden;
+  position: relative; /* needed for overlay & action positioning */
 }
 
 .memory-img{
@@ -501,5 +520,50 @@ body.has-tabbar .shell {
   color: rgba(255,255,255,0.68);
   font-size: 13px;
   line-height: 1.35;
+}
+
+/* Like UI for memories */
+.memory-like{
+  appearance:none;
+  border:0;
+  background: rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.92);
+  font-weight:800;
+  font-size:20px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 10px;
+  border-radius:12px;
+  position:absolute;
+  right:12px;
+  bottom:12px;
+  z-index:3;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+}
+.memory-like:active{ transform: scale(0.96); }
+.memory-like.is-liked{
+  color: var(--pink);
+  background: linear-gradient(135deg, rgba(255,45,85,0.12), rgba(255,94,161,0.12));
+  text-shadow: 0 6px 18px rgba(255,45,85,0.18);
+}
+
+/* Heart overlay animation on image double-click */
+.memory-heart-overlay{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  pointer-events:none;
+  font-size:72px;
+  opacity:0;
+  transition: transform 360ms cubic-bezier(.2,.8,.2,1), opacity 360ms ease;
+  will-change: transform, opacity;
+}
+.memory-heart-overlay.is-visible{
+  opacity:1;
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
