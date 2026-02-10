@@ -44,6 +44,17 @@ const tabCoupons = $("#tabCoupons");
 const tabMemories = $("#tabMemories");     
 const memoriesGridEl = $("#memoriesGrid");
 
+// Posting form elements (modal)
+const postForm = $("#postForm");
+const postFile = $("#postFile");
+const postCaption = $("#postCaption");
+const postBtn = $("#postBtn");
+const postMsg = $("#postMsg");
+const postModal = $("#postModal");
+const postBackdrop = $("#postModalBackdrop");
+const postCancel = $("#postCancel");
+const memAddBtn = $("#memAddBtn");
+
 function setActiveTab(name) {
   if (!tabHome || !tabCoupons || !tabMemories) return;
   tabHome.classList.toggle("is-active", name === "woohoo");
@@ -209,95 +220,175 @@ const MEMORIES = [
     meta: "11 Décembre 2025",
   },
 ];
+// --- User-posted memories storage (Data URLs) ---
+const USER_MEMORIES_KEY = "valentine_user_memories_v1";
+const MEMORIES_BATCH = 6; // initial batch size
 
-function renderMemories() {
-  if (!memoriesGridEl) return;
+function loadUserMemories() {
+  try {
+    const raw = localStorage.getItem(USER_MEMORIES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+function saveUserMemories(arr) {
+  try { localStorage.setItem(USER_MEMORIES_KEY, JSON.stringify(arr)); } catch {}
+}
+function addUserMemory(obj) {
+  const cur = loadUserMemories();
+  cur.unshift(obj); // newest first
+  saveUserMemories(cur);
+}
 
-  memoriesGridEl.innerHTML = "";
+// Feed state for lazy-loading + shuffle
+let memoryFeed = [];
+let memoryFeedIndex = 0;
+let memoryObserver = null;
+let builtShuffled = null; // shuffled built-in memories (created once per session)
+let memoryFeedInitialized = false;
 
-  // Load likes from storage
+function shuffleArray(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+}
+
+function createMemoryCard(m) {
+  const id = m.id || m.src || JSON.stringify(m);
+
+  const card = document.createElement("div");
+  card.className = "memory-card";
+
+  const img = document.createElement("img");
+  img.className = "memory-img";
+  img.src = m.src;
+  img.alt = m.caption || "Memory";
+
+  const overlay = document.createElement("div");
+  overlay.className = "memory-heart-overlay";
+  overlay.innerHTML = "💖";
+
+  const body = document.createElement("div");
+  body.className = "memory-body";
+
+  const cap = document.createElement("p");
+  cap.className = "memory-caption";
+  cap.textContent = m.caption || "";
+
+  const meta = document.createElement("p");
+  meta.className = "memory-meta";
+  meta.textContent = m.meta || "";
+
+  const likeBtn = document.createElement("button");
+  likeBtn.className = "memory-like";
+  likeBtn.type = "button";
+  likeBtn.setAttribute("aria-label", "J'aime");
   const likes = loadLikes();
+  likeBtn.setAttribute("aria-pressed", likes[id] ? "true" : "false");
+  likeBtn.textContent = likes[id] ? "💖" : "🤍";
+  if (likes[id]) likeBtn.classList.add("is-liked");
 
-  MEMORIES.forEach((m) => {
-    const id = m.src || JSON.stringify(m);
-
-    const card = document.createElement("div");
-    card.className = "memory-card";
-
-    const img = document.createElement("img");
-    img.className = "memory-img";
-    img.src = m.src;
-    img.alt = m.caption || "Memory";
-
-    // Heart overlay for double-click animation
-    const overlay = document.createElement("div");
-    overlay.className = "memory-heart-overlay";
-    overlay.innerHTML = "💖";
-
-    const body = document.createElement("div");
-    body.className = "memory-body";
-
-    const cap = document.createElement("p");
-    cap.className = "memory-caption";
-    cap.textContent = m.caption || "";
-
-    const meta = document.createElement("p");
-    meta.className = "memory-meta";
-    meta.textContent = m.meta || "";
-
-    // Like button (heart-only, placed over the card bottom-right)
-    const likeBtn = document.createElement("button");
-    likeBtn.className = "memory-like";
-    likeBtn.type = "button";
-    likeBtn.setAttribute("aria-label", "J'aime");
-    likeBtn.setAttribute("aria-pressed", likes[id] ? "true" : "false");
-    likeBtn.textContent = likes[id] ? "💖" : "🤍";
-    if (likes[id]) likeBtn.classList.add("is-liked");
-
-    likeBtn.addEventListener("click", () => {
-      const newVal = !Boolean(loadLikes()[id]);
-      setLiked(id, newVal);
-      // update UI immediately
-      likeBtn.textContent = newVal ? "💖" : "🤍";
-      likeBtn.classList.toggle("is-liked", newVal);
-      likeBtn.setAttribute("aria-pressed", newVal ? "true" : "false");
-    });
-
-    body.appendChild(cap);
-    body.appendChild(meta);
-    // append like button to the card so it's positioned bottom-right
-    card.appendChild(likeBtn);
-
-    card.appendChild(img);
-    card.appendChild(overlay);
-    card.appendChild(body);
-
-    // Pointer-based double-tap detection (works on mobile and desktop)
-    img._lastTap = 0;
-    img.addEventListener("pointerup", (ev) => {
-      const now = Date.now();
-      const DT = 300; // ms threshold for double-tap
-      if (now - (img._lastTap || 0) <= DT) {
-        // double-tap detected
-        const currentlyLiked = Boolean(loadLikes()[id]);
-        if (!currentlyLiked) {
-          setLiked(id, true);
-          likeBtn.textContent = "💖";
-          likeBtn.classList.add("is-liked");
-          likeBtn.setAttribute("aria-pressed", "true");
-        }
-
-        // animate overlay
-        overlay.classList.add("is-visible");
-        window.setTimeout(() => overlay.classList.remove("is-visible"), 520);
-        img._lastTap = 0;
-      } else {
-        img._lastTap = now;
-      }
-    });
-
-    memoriesGridEl.appendChild(card);
+  likeBtn.addEventListener("click", () => {
+    const newVal = !Boolean(loadLikes()[id]);
+    setLiked(id, newVal);
+    likeBtn.textContent = newVal ? "💖" : "🤍";
+    likeBtn.classList.toggle("is-liked", newVal);
+    likeBtn.setAttribute("aria-pressed", newVal ? "true" : "false");
   });
+
+  body.appendChild(cap);
+  body.appendChild(meta);
+  card.appendChild(likeBtn);
+  card.appendChild(img);
+  card.appendChild(overlay);
+  card.appendChild(body);
+
+  img._lastTap = 0;
+  img.addEventListener("pointerup", () => {
+    const now = Date.now();
+    const DT = 300;
+    if (now - (img._lastTap || 0) <= DT) {
+      const currentlyLiked = Boolean(loadLikes()[id]);
+      if (!currentlyLiked) {
+        setLiked(id, true);
+        likeBtn.textContent = "💖";
+        likeBtn.classList.add("is-liked");
+        likeBtn.setAttribute("aria-pressed", "true");
+      }
+      overlay.classList.add("is-visible");
+      window.setTimeout(() => overlay.classList.remove("is-visible"), 520);
+      img._lastTap = 0;
+    } else {
+      img._lastTap = now;
+    }
+  });
+
+  return card;
+}
+
+function initMemoriesFeed() {
+  if (!memoriesGridEl) return;
+  // Prepare shuffled built-in memories once per session
+  if (!builtShuffled) {
+    builtShuffled = MEMORIES.map((m, idx) => ({ ...m, id: m.src || `built-${idx}` }));
+    shuffleArray(builtShuffled);
+  }
+
+  // combine user-posted (newest first) and the shuffled built-in list
+  const users = loadUserMemories();
+  memoryFeed = [...users, ...builtShuffled];
+
+  // reset index and grid
+  memoryFeedIndex = 0;
+  memoriesGridEl.innerHTML = "";
+  memoryFeedInitialized = true;
+
+  // ensure sentinel exists
+  const sentinel = $("#memoriesSentinel");
+  if (memoryObserver) {
+    try { memoryObserver.disconnect(); } catch {}
+    memoryObserver = null;
+  }
+
+  renderNextMemories();
+
+  // Setup intersection observer to load more
+  if (sentinel && 'IntersectionObserver' in window) {
+    memoryObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) renderNextMemories();
+      });
+    }, { root: null, rootMargin: '200px', threshold: 0.1 });
+    memoryObserver.observe(sentinel);
+  }
+}
+
+function renderNextMemories() {
+  if (!memoriesGridEl) return;
+  const start = memoryFeedIndex;
+  const end = Math.min(memoryFeed.length, memoryFeedIndex + MEMORIES_BATCH);
+  for (let i = start; i < end; i++) {
+    const card = createMemoryCard(memoryFeed[i]);
+    memoriesGridEl.appendChild(card);
+  }
+  memoryFeedIndex = end;
+
+  // If all loaded, disconnect observer
+  if (memoryFeedIndex >= memoryFeed.length && memoryObserver) {
+    try { memoryObserver.disconnect(); } catch {}
+    memoryObserver = null;
+  }
+}
+
+// Public render function used by tab clicks etc.
+function renderMemories() {
+  // Initialize feed only once per session. Subsequent tab switches won't reshuffle.
+  if (!memoryFeedInitialized) initMemoriesFeed();
 }
 
 /* Likes storage helpers */
@@ -363,6 +454,12 @@ function remainingCoupons(state) {
 function formatTodayForUI() {
   const d = new Date();
   return d.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+}
+
+function formatDateNoWeekday() {
+  const d = new Date();
+  // day month year in fr-FR without weekday
+  return d.toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" });
 }
 
 function renderCoupons() {
@@ -528,7 +625,11 @@ resetBtn.addEventListener("click", () => {
   // Reset likes on memories
   try { localStorage.removeItem(LIKES_KEY); } catch {}
 
-  // If the memories screen is visible, re-render to clear UI
+  // Reset user-posted memories
+  try { localStorage.removeItem(USER_MEMORIES_KEY); } catch {}
+
+  // Reset in-memory feed so memories UI can re-init (clears user posts)
+  try { memoryFeedInitialized = false; if (memoryObserver) { memoryObserver.disconnect(); memoryObserver = null; } if (memoriesGridEl) memoriesGridEl.innerHTML = ""; } catch {}
   try { renderMemories(); } catch {}
 
   // Hide tabbar again (NEW)
@@ -540,6 +641,17 @@ resetBtn.addEventListener("click", () => {
 
 /** On load */
 document.addEventListener("DOMContentLoaded", () => {
+  // Prepare a single shuffled order for built-in memories once at app open
+  if (!builtShuffled) {
+    builtShuffled = MEMORIES.map((m, idx) => ({ ...m, id: m.src || `built-${idx}` }));
+    shuffleArray(builtShuffled);
+  }
+  // Ensure modal is appended to <body> so it's not clipped by card/container styles
+  try {
+    if (postModal && postModal.parentNode !== document.body) {
+      document.body.appendChild(postModal);
+    }
+  } catch {}
   if (isUnlocked()) {
     resetAskUI();
 
@@ -596,4 +708,113 @@ if (woohooToMemories) {
     setActiveTab("memories");
   });
 }
+
+// Posting handler
+if (postBtn) {
+  postBtn.addEventListener("click", () => {
+    if (!postFile || !postFile.files || postFile.files.length === 0) {
+      if (postMsg) postMsg.textContent = "Choisis une photo d'abord 😌";
+      return;
+    }
+    const file = postFile.files[0];
+    if (!file.type.startsWith("image/")) {
+      if (postMsg) postMsg.textContent = "Fichier non supporté, choisis une image.";
+      return;
+    }
+    const MAX = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX) {
+      if (postMsg) postMsg.textContent = "Image trop volumineuse (max 5MB).";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      const caption = (postCaption && postCaption.value) ? postCaption.value.trim() : "";
+          const obj = {
+            id: `user-${Date.now()}`,
+            src: dataUrl,
+            caption: caption,
+            meta: formatDateNoWeekday(),
+          };
+
+          // persist and insert at top of current feed
+          addUserMemory(obj);
+          // if feed hasn't been initialized yet, initialize it so the new post appears
+          if (!memoryFeedInitialized) {
+            initMemoriesFeed();
+          }
+          // insert into memoryFeed at front and render at top of grid
+          memoryFeed.unshift(obj);
+          if (memoriesGridEl) {
+            const newCard = createMemoryCard(obj);
+            memoriesGridEl.insertBefore(newCard, memoriesGridEl.firstChild);
+            // account for one more already-rendered item
+            memoryFeedIndex += 1;
+          }
+
+          // show memories screen and close modal (use closePostModal to restore body scroll)
+          showScreen("memories");
+          setActiveTab("memories");
+          try { closePostModal(); } catch (e) {}
+
+          if (postCaption) postCaption.value = "";
+          if (postFile) postFile.value = "";
+          if (postMsg) {
+            postMsg.textContent = "✅ Publié !";
+            // small timeout then clear message
+            window.setTimeout(() => { if (postMsg) postMsg.textContent = ""; }, 2500);
+          }
+    };
+    reader.onerror = () => {
+      if (postMsg) postMsg.textContent = "Erreur de lecture du fichier.";
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Modal open/close handlers
+function openPostModal() {
+  if (!postModal) return;
+  // lock background scroll and remember position so opening modal won't jump
+  const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  try {
+    document.body.style.top = `-${scrollY}px`;
+    document.body.classList.add("modal-open");
+  } catch {}
+
+  postModal.classList.add("is-active");
+  postModal.setAttribute("aria-hidden", "false");
+
+  // try focusing without scrolling (modern browsers support preventScroll)
+  window.setTimeout(() => {
+    try {
+      if (postFile && typeof postFile.focus === 'function') {
+        postFile.focus({ preventScroll: true });
+      }
+    } catch (e) {
+      try { if (postFile) postFile.focus(); } catch {}
+    }
+  }, 60);
+}
+function closePostModal() {
+  if (!postModal) return;
+  postModal.classList.remove("is-active");
+  postModal.setAttribute("aria-hidden", "true");
+  if (postMsg) postMsg.textContent = "";
+  // restore scroll position
+  try {
+    const top = parseInt(document.body.style.top || '0') || 0;
+    document.body.classList.remove("modal-open");
+    document.body.style.top = "";
+    window.scrollTo(0, -top);
+  } catch {}
+}
+
+if (memAddBtn) memAddBtn.addEventListener("click", openPostModal);
+if (postBackdrop) postBackdrop.addEventListener("click", closePostModal);
+if (postCancel) postCancel.addEventListener("click", closePostModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePostModal();
+});
 

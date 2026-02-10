@@ -136,6 +136,33 @@
           <div id="memoriesGrid" class="memories-grid">
             <!-- Cards injected by JS -->
           </div>
+
+          <!-- Add button (top-right of the card) -->
+          <button id="memAddBtn" class="mem-add" type="button" title="Ajouter une photo">＋</button>
+
+          <!-- Modal for posting -->
+          <div id="postModal" class="modal" aria-hidden="true">
+            <div id="postModalBackdrop" class="modal-backdrop"></div>
+            <div class="modal-dialog card" role="dialog" aria-modal="true" aria-labelledby="postTitle">
+              <div class="card__content">
+                <h2 id="postTitle" class="title">Nouvelle photo</h2>
+                <form id="postForm" class="post-form" novalidate>
+                  <label class="label" for="postFile">Ajouter une photo</label>
+                  <input id="postFile" class="post-input" type="file" accept="image/*" />
+                  <label class="label" for="postCaption">Légende</label>
+                  <textarea id="postCaption" class="post-caption" rows="2" placeholder="Écris une petite légende..."></textarea>
+                  <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+                    <button id="postBtn" class="btn btn--primary" type="button">Post</button>
+                    <button id="postCancel" class="btn btn--ghost" type="button">Annuler</button>
+                    <div id="postMsg" class="help" aria-live="polite"></div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sentinel used for infinite scroll -->
+          <div id="memoriesSentinel" aria-hidden="true"></div>
         </div>
       </section>
 

@@ -484,10 +484,76 @@ body.has-tabbar .shell {
   margin-top: 12px;
 }
 
+/* Posting form styles */
+.post-form{
+  margin-top: 14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.post-input{
+  border-radius:12px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.12);
+  color:var(--text);
+  width:100%;
+}
+.post-caption{
+  border-radius:12px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.12);
+  color:var(--text);
+  resize:vertical;
+  width:100%;
+}
+
+/* Load more sentinel spacing */
+#memoriesSentinel{ height: 28px; }
+
 @media (max-width: 420px) {
   .memories-grid{
     grid-template-columns: 1fr;
   }
+  .post-form{ gap:6px; }
+}
+
+/* Add button (top-right of memories card) */
+.card__content { position: relative; }
+.mem-add{
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(135deg, var(--pink), var(--pink2));
+  color: white;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 22px rgba(255,45,85,0.24);
+  cursor: pointer;
+}
+.mem-add:active{ transform: translateY(1px) scale(0.98); }
+
+/* Modal styles */
+.modal{ display:none; position:fixed; inset:0; z-index:1000; }
+.modal.is-active{ display:block; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter: blur(6px); }
+.modal-dialog{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width: min(720px, 92%); max-height: 86vh; overflow:auto; }
+.modal .card__content{ padding:18px; }
+.btn--ghost{ background: transparent; border:1px solid rgba(255,255,255,0.08); }
+
+/* Lock body when modal is open without jumping on mobile */
+.modal-open{ position: fixed; left: 0; right: 0; }
+
+@media (max-width: 420px) {
+  .mem-add{ right: 10px; top: 10px; width:36px; height:36px; font-size:18px; }
+  .modal-dialog{ width: 96%; }
 }
 
 .memory-card{
