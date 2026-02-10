@@ -198,6 +198,16 @@ const MEMORIES = [
     caption: "Sushi Shop 🍣",
     meta: "29 Novembre 2025",
   },
+  {
+    src: "9.jpeg",
+    caption: "ICHINISAN&GO 🍣",
+    meta: "10 Février 2026",
+  },
+  {
+    src: "10.jpeg",
+    caption: "Flams🍕",
+    meta: "11 Décembre 2025",
+  },
 ];
 
 function renderMemories() {
